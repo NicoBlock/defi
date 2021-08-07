@@ -10,6 +10,20 @@ module.exports = {
       port: 7545,
       network_id: "*",
     },
+    ropsten: {
+        network_id: 3,
+        provider: function () {
+          return new HDWalletProvider(process.env.MNEMONIC, process.env.ROPSTEN_URL);
+        },
+        gas: 5000000,
+        gasPrice: 45000000000,
+        confirmations: 2,
+        timeoutBlocks: 200,
+        skipDryRun: false,
+        websocket: false,
+        timeoutBlocks: 50000,
+        networkCheckTimeout: 1000000
+      }
   },
   compilers: {
     solc: {
