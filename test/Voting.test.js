@@ -12,7 +12,7 @@ contract("Voting", function(accounts) {
 		voting = await Voting.new({ from: admin })
 	});
 
-	describe('Basics', () => {
+	describe('Basic ownership', () => {
 		it('has a owner', async () => {
 			const owner = admin
 			assert.equal(await voting.owner(), owner)
@@ -20,26 +20,26 @@ contract("Voting", function(accounts) {
 	});
 
 	describe('Registering Voters', () => {
-		it('currently in correct WorkflowStatus', async () => {
+		it('verifies current status is in correct WorkflowStatus', async () => {
 			assert.equal(await voting.getStatus(), WorkflowStatus.RegisteringVoters)
 		});
 
-		it('reverts if voter registration by user and not by admin', async () => {
+		it('reverts if user tries to register himself as only admin can call the function', async () => {
 			await expectRevert(voting.registerToVote( voter1, { from: voter1 } ),
 				"Ownable: caller is not the owner")
 		});
 
-		it('emits event after registering first address allowed to vote', async () => {
+		it('emits event after admin registers first address allowed to vote', async () => {
 			res = await voting.registerToVote(voter1, { from: admin })
 			expectEvent(res, "VoterRegistered")
 		});
 
-		it('emits event after registering second address allowed to vote', async () => {
+		it('emits event after owner registers second address allowed to vote', async () => {
 			res = await voting.registerToVote(voter2, { from: admin })
 			expectEvent(res, "VoterRegistered")
 		});
 
-		it('reverts if voter user already registered', async () => {
+		it('reverts if voter address is already registered', async () => {
 			await expectRevert(voting.registerToVote(voter1, { from: admin }),
 				"Voter already registered"
 			)
@@ -52,6 +52,10 @@ contract("Voting", function(accounts) {
 			assert.equal(await voting.getStatus(), WorkflowStatus.ProposalsRegistrationStarted)
 			expectEvent(res, "WorkflowStatusChange")
 		})
+
+		it('verifies current status is in correct WorkflowStatus', async () => {
+			assert.equal(await voting.getStatus(), WorkflowStatus.ProposalsRegistrationStarted)
+		});
 	})
 
 	describe('Sending Proposition', () => {
@@ -90,24 +94,30 @@ contract("Voting", function(accounts) {
 			assert.equal(await voting.getStatus(), WorkflowStatus.ProposalsRegistrationEnded)
 			expectEvent(res, "WorkflowStatusChange")
 		})
+
+		it('verifies current status is in correct WorkflowStatus', async () => {
+			assert.equal(await voting.getStatus(), WorkflowStatus.ProposalsRegistrationEnded)
+		});
 	})
 
 	describe('Opening Vote Session', () => {
 		it('changes WorkflowStatus and emits event', async () => {
 			res = await voting.openVoteSession({ from: admin })
-			assert.equal(await voting.getStatus(), WorkflowStatus.VotingSessionStarted)
 			expectEvent(res, "WorkflowStatusChange")
 		})
+
+		it('verifies current status is in correct WorkflowStatus', async () => {
+			assert.equal(await voting.getStatus(), WorkflowStatus.VotingSessionStarted)
+		});
 	})
 
 	describe('Voting for proposition', () => {
 		it('checks voter1 votes for proposition', async () => {
-			assert.equal(await voting.getStatus(), WorkflowStatus.VotingSessionStarted)
 			res = await voting.voteFor(2, { from: voter1 })
 			expectEvent(res, "Voted")
 		})
 		
-		it('reverts when voter1 tries to vote again', async () => {
+		it('reverts when registered voter1 tries to vote again', async () => {
 			await expectRevert(voting.voteFor(1, { from: voter1 }), 
 				"Already voted"
 			)
@@ -120,7 +130,6 @@ contract("Voting", function(accounts) {
 		})
 
 		it('checks voter2 votes for proposition', async () => {
-			assert.equal(await voting.getStatus(), WorkflowStatus.VotingSessionStarted)
 			res = await voting.voteFor(2, { from: voter2 })
 			expectEvent(res, "Voted")
 		})
@@ -135,21 +144,27 @@ contract("Voting", function(accounts) {
 	describe('Closing Vote Session', () => {
 		it('changes WorkflowStatus and emits event', async () => {
 			res = await voting.closeVoteSession({ from: admin })
-			assert.equal(await voting.getStatus(), WorkflowStatus.VotingSessionEnded)
 			expectEvent(res, "WorkflowStatusChange")
 		})
+
+		it('verifies current status is in correct WorkflowStatus', async () => {
+			assert.equal(await voting.getStatus(), WorkflowStatus.VotingSessionEnded)
+		});
 	})
 
 	describe('Counting Votes', () => {
 		it('changes WorkflowStatus and emits events', async () => {
 			res = await voting.countVotes({ from: admin })
-			assert.equal(await voting.getStatus(), WorkflowStatus.VotesTallied)
 			expectEvent(res, "WorkflowStatusChange")
 			expectEvent(res, "VotesTallied")
 		})
+
+		it('verifies current status is in correct WorkflowStatus', async () => {
+			assert.equal(await voting.getStatus(), WorkflowStatus.VotesTallied)
+		});
 	})
 
-	describe('Shows Winner', () => {
+	describe('Showing Winning Proposal Data', () => {
 		it('checks number of votes, Proposal ID and description for the winner', async () => {
 			nbrVotes = await voting.getNumberOfVotes({ from: admin })
 			expect(nbrVotes.toNumber()).to.be.equal(2)
@@ -157,7 +172,15 @@ contract("Voting", function(accounts) {
 			expect(winId.toNumber()).to.be.equal(2)
 			winDesc = await voting.getPropositionDescription({ from: admin })
 			expect(winDesc.toString()).to.be.equal("proposition 2")
-			
+		})
+
+		it('checks all results are available to anyone', async () => {
+			nbrVotes = await voting.getNumberOfVotes({ from: voter2 })
+			expect(nbrVotes.toNumber()).to.be.equal(2)
+			winId = await voting.getWinningProposalId({ from: voter2 })
+			expect(winId.toNumber()).to.be.equal(2)
+			winDesc = await voting.getPropositionDescription({ from: voter2 })
+			expect(winDesc.toString()).to.be.equal("proposition 2")
 		})
 	})
 
