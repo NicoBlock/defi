@@ -169,34 +169,34 @@ class App extends Component {
           <hr></hr>
           <br></br>
         </div>
-        {status == 0 ? (
+        {status === "0" ? (
           <RegisterVoters
             registerToVote={this.registerToVote}
             owner={this.state.owner}
             user={this.state.user}
             openProposalRegistration={this.openProposalRegistration}
           />
-        ) : status == 1 ? (
+        ) : status === "1" ? (
           <SendProposal
             sendProposition={this.sendProposition}
             owner={this.state.owner}
             user={this.state.user}
             closeProposalRegistration={this.closeProposalRegistration}
           />
-        ) : status == 2 ? (
+        ) : status === "2" ? (
           <OpenVoteSession
             openVoteSession={this.openVoteSession}
             owner={this.state.owner}
             user={this.state.user}
           />
-        ) : status == 3 ? (
+        ) : status === "3" ? (
           <VoteForProposal
             voteForProposal={this.voteForProposal}
             closeVoteSession={this.closeVoteSession}
             owner={this.state.owner}
             user={this.state.user}
           />
-        ) : status == 4 ? (
+        ) : status === "4" ? (
           <TallyVotes
             countVotes={this.countVotes}
             owner={this.state.owner}
